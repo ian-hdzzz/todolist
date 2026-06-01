@@ -7,6 +7,9 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -158,54 +161,61 @@ const ListsScreen = () => {
       />
 
       <Modal visible={showModal} animationType="slide" transparent>
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>
-              {editingCategory ? "Editar Lista" : "Nueva Lista"}
-            </Text>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={styles.overlay}>
+            <View style={styles.modal}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalTitle}>
+                  {editingCategory ? "Editar Lista" : "Nueva Lista"}
+                </Text>
 
-            <AppInput
-              label="Nombre *"
-              placeholder="Trabajo, Personal, Estudio..."
-              value={name}
-              onChangeText={setName}
-            />
-            <AppInput
-              label="Descripción"
-              placeholder="Descripción opcional..."
-              value={description}
-              onChangeText={setDescription}
-            />
-
-            <Text style={styles.colorLabel}>Color</Text>
-            <View style={styles.colorRow}>
-              {PALETTE.map((c) => (
-                <TouchableOpacity
-                  key={c}
-                  style={[
-                    styles.colorDot,
-                    { backgroundColor: c },
-                    color === c && styles.colorSelected,
-                  ]}
-                  onPress={() => setColor(c)}
+                <AppInput
+                  label="Nombre *"
+                  placeholder="Trabajo, Personal, Estudio..."
+                  value={name}
+                  onChangeText={setName}
                 />
-              ))}
-            </View>
+                <AppInput
+                  label="Descripcion"
+                  placeholder="Descripcion opcional..."
+                  value={description}
+                  onChangeText={setDescription}
+                />
 
-            <AppButton
-              label={editingCategory ? "Guardar cambios" : "Crear Lista"}
-              onPress={handleSave}
-              loading={saving}
-              style={styles.createBtn}
-            />
-            <AppButton
-              label="Cancelar"
-              onPress={() => setShowModal(false)}
-              variant="outline"
-              style={styles.cancelBtn}
-            />
+                <Text style={styles.colorLabel}>Color</Text>
+                <View style={styles.colorRow}>
+                  {PALETTE.map((c) => (
+                    <TouchableOpacity
+                      key={c}
+                      style={[
+                        styles.colorDot,
+                        { backgroundColor: c },
+                        color === c && styles.colorSelected,
+                      ]}
+                      onPress={() => setColor(c)}
+                    />
+                  ))}
+                </View>
+
+                <AppButton
+                  label={editingCategory ? "Guardar cambios" : "Crear Lista"}
+                  onPress={handleSave}
+                  loading={saving}
+                  style={styles.createBtn}
+                />
+                <AppButton
+                  label="Cancelar"
+                  onPress={() => setShowModal(false)}
+                  variant="outline"
+                  style={styles.cancelBtn}
+                />
+              </ScrollView>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );

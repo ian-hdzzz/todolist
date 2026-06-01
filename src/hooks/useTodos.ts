@@ -24,19 +24,27 @@ export const useTodos = () => {
     title: string,
     description: string,
     categoryIds: string[] = [],
-    priority: TodoPriority = "MEDIUM",
-    dueDate?: string
+    priority: TodoPriority = "MEDIUM"
   ) => {
     const dto: CreateTodoDto = {
       title,
       description,
       categories: categoryIds,
       priority,
-      ...(dueDate ? { dueDate } : {}),
     };
-    const newTodo = await todoApi.createTodo(dto);
-    setTodos((prev) => [newTodo, ...prev]);
-    return newTodo;
+    try {
+      const newTodo = await todoApi.createTodo(dto);
+      setTodos((prev) => [newTodo, ...prev]);
+      return newTodo;
+    } catch (e: any) {
+      // El backend crea la tarea pero crashea al serializar la respuesta (bug de dueDate null).
+      // Si es 500 hacemos refresh para mostrar la tarea recién creada sin lanzar error.
+      if (e?.response?.status === 500) {
+        await fetchTodos();
+        return;
+      }
+      throw e;
+    }
   };
 
   const editTodo = async (id: string, dto: UpdateTodoDto) => {

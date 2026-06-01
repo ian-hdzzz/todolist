@@ -7,10 +7,13 @@ import {
   Modal,
   Alert,
   TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
 } from "react-native";
 import { useRoute, RouteProp } from "@react-navigation/native";
 import { useTodos } from "../hooks/useTodos";
-import { TodoPriority } from "../domain/Todo";
+import { Todo, TodoPriority } from "../domain/Todo";
 import TodoItem from "../components/TodoItem";
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
@@ -26,13 +29,21 @@ const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
   { value: "HIGH", label: "Alta", color: "#e53e3e" },
 ];
 
+const extractError = (e: any): string => {
+  const data = e?.response?.data;
+  if (!data) return e?.message ?? "Error al guardar la tarea";
+  if (typeof data === "string") return data;
+  return data.message ?? data.detail ?? data.error ?? JSON.stringify(data);
+};
+
 const ListDetailScreen = () => {
   const route = useRoute<Route>();
   const { categoryId } = route.params;
-  const { todos, loading, fetchTodos, addTodo, removeTodo, toggleTodo } =
+  const { todos, loading, fetchTodos, addTodo, editTodo, removeTodo, toggleTodo } =
     useTodos();
 
   const [showModal, setShowModal] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
@@ -42,34 +53,59 @@ const ListDetailScreen = () => {
     fetchTodos();
   }, []);
 
-  // Filtrar las tareas de esta lista/categoría
   const categoryTodos = todos.filter((t) =>
     t.categories?.some((c) => c.id === categoryId)
   );
-
   const completed = categoryTodos.filter((t) => t.completed).length;
 
-  const handleCreate = async () => {
+  const resetForm = () => {
+    setEditingTodo(null);
+    setTitle("");
+    setDescription("");
+    setPriority("MEDIUM");
+  };
+
+  const openCreate = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEdit = (todo: Todo) => {
+    setEditingTodo(todo);
+    setTitle(todo.title);
+    setDescription(todo.description ?? "");
+    setPriority(todo.priority);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
     if (!title.trim()) {
-      Alert.alert("Error", "El título es requerido");
+      Alert.alert("Error", "El titulo es requerido");
       return;
     }
     setSaving(true);
     try {
-      await addTodo(title.trim(), description.trim(), [categoryId], priority);
-      setTitle("");
-      setDescription("");
-      setPriority("MEDIUM");
+      if (editingTodo) {
+        await editTodo(editingTodo.id, {
+          title: title.trim(),
+          description: description.trim(),
+          priority,
+          categories: [categoryId],
+        });
+      } else {
+        await addTodo(title.trim(), description.trim(), [categoryId], priority);
+      }
+      resetForm();
       setShowModal(false);
-    } catch {
-      Alert.alert("Error", "No se pudo crear la tarea");
+    } catch (e: any) {
+      Alert.alert("Error", extractError(e));
     } finally {
       setSaving(false);
     }
   };
 
   const handleDelete = (id: string) => {
-    Alert.alert("Eliminar tarea", "¿Estás seguro?", [
+    Alert.alert("Eliminar tarea", "¿Estas seguro?", [
       { text: "Cancelar", style: "cancel" },
       {
         text: "Eliminar",
@@ -95,11 +131,7 @@ const ListDetailScreen = () => {
             <View
               style={[
                 styles.progressFill,
-                {
-                  width: `${
-                    Math.round((completed / categoryTodos.length) * 100)
-                  }%`,
-                },
+                { width: `${Math.round((completed / categoryTodos.length) * 100)}%` },
               ]}
             />
           </View>
@@ -114,6 +146,7 @@ const ListDetailScreen = () => {
             todo={item}
             onToggle={() => toggleTodo(item.id)}
             onDelete={() => handleDelete(item.id)}
+            onEdit={() => openEdit(item)}
           />
         )}
         ListEmptyComponent={
@@ -128,74 +161,81 @@ const ListDetailScreen = () => {
 
       <AppButton
         label="+ Nueva Tarea"
-        onPress={() => setShowModal(true)}
+        onPress={openCreate}
         style={styles.fab}
       />
 
       <Modal visible={showModal} animationType="slide" transparent>
-        <View style={styles.overlay}>
-          <View style={styles.modal}>
-            <Text style={styles.modalTitle}>Nueva Tarea</Text>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+        >
+          <View style={styles.overlay}>
+            <View style={styles.modal}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.modalTitle}>
+                  {editingTodo ? "Editar Tarea" : "Nueva Tarea"}
+                </Text>
 
-            <AppInput
-              label="Título *"
-              placeholder="¿Qué hay que hacer?"
-              value={title}
-              onChangeText={setTitle}
-            />
-            <AppInput
-              label="Descripción"
-              placeholder="Descripción opcional..."
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={3}
-              style={styles.multiline}
-            />
+                <AppInput
+                  label="Titulo *"
+                  placeholder="¿Que hay que hacer?"
+                  value={title}
+                  onChangeText={setTitle}
+                />
+                <AppInput
+                  label="Descripcion"
+                  placeholder="Descripcion opcional..."
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={3}
+                  style={styles.multiline}
+                />
 
-            <Text style={styles.sectionLabel}>Prioridad</Text>
-            <View style={styles.chipRow}>
-              {PRIORITIES.map((p) => (
-                <TouchableOpacity
-                  key={p.value}
-                  style={[
-                    styles.chip,
-                    { borderColor: p.color },
-                    priority === p.value && { backgroundColor: p.color },
-                  ]}
-                  onPress={() => setPriority(p.value)}
-                >
-                  <Text
-                    style={[
-                      styles.chipText,
-                      { color: priority === p.value ? "#fff" : p.color },
-                    ]}
-                  >
-                    {p.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+                <Text style={styles.sectionLabel}>Prioridad</Text>
+                <View style={styles.chipRow}>
+                  {PRIORITIES.map((p) => (
+                    <TouchableOpacity
+                      key={p.value}
+                      style={[
+                        styles.chip,
+                        { borderColor: p.color },
+                        priority === p.value && { backgroundColor: p.color },
+                      ]}
+                      onPress={() => setPriority(p.value)}
+                    >
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: priority === p.value ? "#fff" : p.color },
+                        ]}
+                      >
+                        {p.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <AppButton
+                  label={editingTodo ? "Guardar cambios" : "Crear Tarea"}
+                  onPress={handleSave}
+                  loading={saving}
+                  style={styles.createBtn}
+                />
+                <AppButton
+                  label="Cancelar"
+                  onPress={() => {
+                    resetForm();
+                    setShowModal(false);
+                  }}
+                  variant="outline"
+                  style={styles.cancelBtn}
+                />
+              </ScrollView>
             </View>
-
-            <AppButton
-              label="Crear Tarea"
-              onPress={handleCreate}
-              loading={saving}
-              style={styles.createBtn}
-            />
-            <AppButton
-              label="Cancelar"
-              onPress={() => {
-                setTitle("");
-                setDescription("");
-                setPriority("MEDIUM");
-                setShowModal(false);
-              }}
-              variant="outline"
-              style={styles.cancelBtn}
-            />
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
@@ -218,11 +258,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     overflow: "hidden",
   },
-  progressFill: {
-    height: "100%",
-    backgroundColor: "#fff",
-    borderRadius: 2,
-  },
+  progressFill: { height: "100%", backgroundColor: "#fff", borderRadius: 2 },
   fab: { position: "absolute", bottom: 24, left: 16, right: 16 },
   overlay: {
     flex: 1,
@@ -235,6 +271,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 24,
     padding: 24,
     paddingBottom: 36,
+    maxHeight: "90%",
   },
   modalTitle: {
     fontSize: 20,

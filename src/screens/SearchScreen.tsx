@@ -34,7 +34,7 @@ const SearchScreen = () => {
     fetchTodos();
   }, []);
 
-  // Búsqueda en backend con debounce
+  // Búsqueda en backend con debounce (solo cuando hay query)
   const doSearch = useCallback(async (q: string) => {
     if (!q.trim()) {
       setSearchResults([]);
@@ -58,9 +58,12 @@ const SearchScreen = () => {
     return () => clearTimeout(timer);
   }, [query, tab, doSearch]);
 
-  // Búsqueda de categorías (cliente)
+  // Tareas: sin query muestra todas, con query muestra resultados del backend
+  const todosToShow = query.trim() ? searchResults : allTodos;
+
+  // Categorías: sin query muestra todas, con query filtra localmente
   const filteredCategories = useMemo(() => {
-    if (!query.trim()) return [];
+    if (!query.trim()) return categories;
     const q = query.toLowerCase();
     return categories.filter(
       (c) =>
@@ -70,8 +73,7 @@ const SearchScreen = () => {
   }, [query, categories]);
 
   const todoCountFor = (categoryId: string) =>
-    allTodos.filter((t) => t.categories?.some((c) => c.id === categoryId))
-      .length;
+    allTodos.filter((t) => t.categories?.some((c) => c.id === categoryId)).length;
 
   return (
     <View style={styles.container}>
@@ -104,18 +106,13 @@ const SearchScreen = () => {
         </TouchableOpacity>
       </View>
 
-      {!query.trim() ? (
-        <EmptyState message="Escribe algo para buscar..." />
-      ) : tab === "todos" ? (
+      {tab === "todos" ? (
         <>
           {searching && (
-            <ActivityIndicator
-              color="#5B5FDE"
-              style={styles.spinner}
-            />
+            <ActivityIndicator color="#5B5FDE" style={styles.spinner} />
           )}
           <FlatList
-            data={searchResults}
+            data={todosToShow}
             keyExtractor={(t) => t.id}
             renderItem={({ item }) => (
               <TodoItem
@@ -126,11 +123,17 @@ const SearchScreen = () => {
             )}
             ListEmptyComponent={
               !searching ? (
-                <EmptyState message="Sin resultados para tareas" />
+                <EmptyState
+                  message={
+                    query.trim()
+                      ? "Sin resultados para tareas"
+                      : "Sin tareas aun"
+                  }
+                />
               ) : null
             }
             contentContainerStyle={
-              searchResults.length === 0 ? styles.flex : styles.list
+              todosToShow.length === 0 ? styles.flex : styles.list
             }
           />
         </>
@@ -151,7 +154,11 @@ const SearchScreen = () => {
             />
           )}
           ListEmptyComponent={
-            <EmptyState message="Sin resultados para listas" />
+            <EmptyState
+              message={
+                query.trim() ? "Sin resultados para listas" : "Sin listas aun"
+              }
+            />
           }
           contentContainerStyle={
             filteredCategories.length === 0 ? styles.flex : styles.list

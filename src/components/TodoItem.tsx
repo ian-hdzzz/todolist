@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 import { Todo } from "../domain/Todo";
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -17,9 +18,10 @@ interface Props {
   todo: Todo;
   onToggle: () => void;
   onDelete: () => void;
+  onEdit?: () => void;
 }
 
-const TodoItem = ({ todo, onToggle, onDelete }: Props) => {
+const TodoItem = ({ todo, onToggle, onDelete, onEdit }: Props) => {
   const priorityColor = PRIORITY_COLOR[todo.priority] ?? "#888";
 
   return (
@@ -75,9 +77,16 @@ const TodoItem = ({ todo, onToggle, onDelete }: Props) => {
         )}
       </View>
 
-      <TouchableOpacity onPress={onDelete} style={styles.deleteBtn}>
-        <Text style={styles.deleteText}>X</Text>
-      </TouchableOpacity>
+      <View style={styles.actions}>
+        {onEdit && (
+          <TouchableOpacity onPress={onEdit} style={styles.actionBtn}>
+            <Ionicons name="pencil-outline" size={18} color="#5B5FDE" />
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity onPress={onDelete} style={styles.actionBtn}>
+          <Ionicons name="trash-outline" size={18} color="#e53e3e" />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -129,8 +138,8 @@ const styles = StyleSheet.create({
   tagsRow: { flexDirection: "row", flexWrap: "wrap", gap: 4, marginTop: 6 },
   tag: { borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
   tagText: { fontSize: 11, fontWeight: "600" },
-  deleteBtn: { padding: 8 },
-  deleteText: { color: "#e53e3e", fontSize: 15, fontWeight: "bold" },
+  actions: { flexDirection: "column", alignItems: "center", gap: 6 },
+  actionBtn: { padding: 4 },
 });
 
 export default TodoItem;

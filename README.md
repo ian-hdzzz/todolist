@@ -4,15 +4,17 @@ Aplicación móvil de gestión de tareas construida con React Native (Expo). Per
 
 ## Tecnologías
 
-| Capa | Tecnología |
-|---|---|
-| Framework | Expo SDK 54 + React Native 0.81 |
-| Lenguaje | TypeScript 5.9 |
-| Navegación | React Navigation v7 (Stack + BottomTabs) |
-| HTTP | Axios con instancia personalizada e interceptores |
-| Autenticación | Firebase Authentication |
-| Persistencia de sesión | AsyncStorage |
-| Estado | React Hooks (useState, useEffect, useCallback) |
+
+| Capa                   | Tecnología                                        |
+| ---------------------- | ------------------------------------------------- |
+| Framework              | Expo SDK 54 + React Native 0.81                   |
+| Lenguaje               | TypeScript 5.9                                    |
+| Navegación             | React Navigation v7 (Stack + BottomTabs)          |
+| HTTP                   | Axios con instancia personalizada e interceptores |
+| Autenticación          | Firebase Authentication                           |
+| Persistencia de sesión | AsyncStorage                                      |
+| Estado                 | React Hooks (useState, useEffect, useCallback)    |
+
 
 ## Arquitectura
 
@@ -72,7 +74,6 @@ EXPO_PUBLIC_FIREBASE_APP_ID=1:276917399944:web:420b68d85e4019cf884a3d
 ## Instalación
 
 ```bash
-cd frontend
 npm install
 ```
 
@@ -92,27 +93,33 @@ npx expo start --ios
 npx expo start --web
 ```
 
-> **Requisito:** el backend Quarkus debe estar corriendo en el puerto 8080 antes de iniciar la app o en su defecto apuntar al backend deployado en gcp: https://backend-1047964714716.us-central1.run.app.
+> **Requisito:** el backend Quarkus debe estar corriendo en el puerto 8080 antes de iniciar la app o en su defecto apuntar al backend deployado en gcp: [https://backend-1047964714716.us-central1.run.app](https://backend-1047964714716.us-central1.run.app).
 
 ## Pantallas
 
-| Pantalla | Descripción |
-|---|---|
-| Login | Autenticación con Firebase email/password |
-| Registro | Creación de cuenta (Firebase + backend) |
-| Inicio | Lista de todas tus tareas con toggle y eliminar |
-| Mis Listas | Categorías/listas con contador de tareas |
-| Detalle de Lista | Tareas filtradas por categoría |
-| Buscar | Búsqueda en tiempo real de tareas y listas |
-| Perfil | Info del usuario, tecnologías y logout |
+
+| Pantalla         | Descripción                                     |
+| ---------------- | ----------------------------------------------- |
+| Login            | Autenticación con Firebase email/password       |
+| Registro         | Creación de cuenta (Firebase + backend)         |
+| Inicio           | Lista de todas tus tareas con toggle y eliminar |
+| Mis Listas       | Categorías/listas con contador de tareas        |
+| Detalle de Lista | Tareas filtradas por categoría                  |
+| Buscar           | Búsqueda en tiempo real de tareas y listas      |
+| Perfil           | Info del usuario, tecnologías y logout          |
+
 
 ## Usuarios de prueba
 
-Si el backend ya tiene datos, puedes crear una cuenta nueva desde la pantalla de Registro.
+| Campo    | Valor           |
+|----------|-----------------|
+| Email    | ian26@gmail.com |
+| Password | JU1Pz,98        |
 
-**Requisitos de contraseña:** mínimo 8 caracteres, una mayúscula, una minúscula, un número y un carácter especial (ej. `Test1234!`).
+También puedes crear una cuenta nueva desde la pantalla de Registro.
 
 ## Links
 
 - Backend: `http://localhost:8080`
 - Firebase Project: `todolist-65183`
+

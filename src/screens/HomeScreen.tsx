@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useTodos } from "../hooks/useTodos";
 import { useCategories } from "../hooks/useCategories";
-import { TodoPriority } from "../domain/Todo";
+import { Todo, TodoPriority } from "../domain/Todo";
 import TodoItem from "../components/TodoItem";
 import AppButton from "../components/AppButton";
 import AppInput from "../components/AppInput";
@@ -26,12 +26,20 @@ const PRIORITIES: { value: TodoPriority; label: string; color: string }[] = [
   { value: "HIGH", label: "Alta", color: "#e53e3e" },
 ];
 
+const extractError = (e: any): string => {
+  const data = e?.response?.data;
+  if (!data) return e?.message ?? "Error al guardar la tarea";
+  if (typeof data === "string") return data;
+  return data.message ?? data.detail ?? data.error ?? JSON.stringify(data);
+};
+
 const HomeScreen = () => {
-  const { todos, loading, error, fetchTodos, addTodo, removeTodo, toggleTodo } =
+  const { todos, loading, error, fetchTodos, addTodo, editTodo, removeTodo, toggleTodo } =
     useTodos();
   const { categories, fetchCategories } = useCategories();
 
   const [showModal, setShowModal] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<TodoPriority>("MEDIUM");
@@ -44,13 +52,28 @@ const HomeScreen = () => {
   }, []);
 
   const resetForm = () => {
+    setEditingTodo(null);
     setTitle("");
     setDescription("");
     setPriority("MEDIUM");
     setSelectedCategoryId(null);
   };
 
-  const handleCreate = async () => {
+  const openCreate = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEdit = (todo: Todo) => {
+    setEditingTodo(todo);
+    setTitle(todo.title);
+    setDescription(todo.description ?? "");
+    setPriority(todo.priority);
+    setSelectedCategoryId(todo.categories?.[0]?.id ?? null);
+    setShowModal(true);
+  };
+
+  const handleSave = async () => {
     if (!title.trim()) {
       Alert.alert("Error", "El titulo es requerido");
       return;
@@ -58,16 +81,20 @@ const HomeScreen = () => {
     setSaving(true);
     try {
       const catIds = selectedCategoryId ? [selectedCategoryId] : [];
-      await addTodo(title.trim(), description.trim(), catIds, priority);
+      if (editingTodo) {
+        await editTodo(editingTodo.id, {
+          title: title.trim(),
+          description: description.trim(),
+          priority,
+          categories: catIds,
+        });
+      } else {
+        await addTodo(title.trim(), description.trim(), catIds, priority);
+      }
       resetForm();
       setShowModal(false);
     } catch (e: any) {
-      const msg =
-        e.response?.data?.message ??
-        e.response?.data ??
-        e.message ??
-        "No se pudo crear la tarea";
-      Alert.alert("Error", String(msg));
+      Alert.alert("Error", extractError(e));
     } finally {
       setSaving(false);
     }
@@ -116,6 +143,7 @@ const HomeScreen = () => {
             todo={item}
             onToggle={() => toggleTodo(item.id)}
             onDelete={() => handleDelete(item.id)}
+            onEdit={() => openEdit(item)}
           />
         )}
         ListEmptyComponent={
@@ -128,7 +156,7 @@ const HomeScreen = () => {
 
       <AppButton
         label="+ Nueva Tarea"
-        onPress={() => setShowModal(true)}
+        onPress={openCreate}
         style={styles.fab}
       />
 
@@ -140,7 +168,9 @@ const HomeScreen = () => {
           <View style={styles.overlay}>
             <View style={styles.modal}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={styles.modalTitle}>Nueva Tarea</Text>
+                <Text style={styles.modalTitle}>
+                  {editingTodo ? "Editar Tarea" : "Nueva Tarea"}
+                </Text>
 
                 <AppInput
                   label="Titulo *"
@@ -221,8 +251,8 @@ const HomeScreen = () => {
                 )}
 
                 <AppButton
-                  label="Crear Tarea"
-                  onPress={handleCreate}
+                  label={editingTodo ? "Guardar cambios" : "Crear Tarea"}
+                  onPress={handleSave}
                   loading={saving}
                   style={styles.createBtn}
                 />

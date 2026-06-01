@@ -15,7 +15,6 @@ export interface Todo {
 export interface CreateTodoDto {
   title: string;
   description: string;
-  dueDate?: string;
   priority: TodoPriority;
   categories: string[];
 }
@@ -23,7 +22,6 @@ export interface CreateTodoDto {
 export interface UpdateTodoDto {
   title?: string;
   description?: string;
-  dueDate?: string;
   priority?: TodoPriority;
   categories?: string[];
   completed?: boolean;
