@@ -56,14 +56,18 @@ src/
 
 ## Variables de entorno
 
-Crea un archivo `.env` en la raíz del proyecto:
+Crea un archivo `.env` en la raíz del proyecto con los siguientes valores:
 
 ```env
-EXPO_PUBLIC_API_URL=http://localhost:8080
-```
+EXPO_PUBLIC_API_URL=https://backend-1047964714716.us-central1.run.app
 
-> **Dispositivo físico:** usa la IP local de tu máquina en lugar de `localhost`.  
-> Ejemplo: `EXPO_PUBLIC_API_URL=http://192.168.1.100:8080`
+EXPO_PUBLIC_FIREBASE_API_KEY=AIzaSyBz_hs_eWRHtTmz4LASZ62U-hc0TG2zulI
+EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN=todolist1-a1996.firebaseapp.com
+EXPO_PUBLIC_FIREBASE_PROJECT_ID=todolist1-a1996
+EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET=todolist1-a1996.firebasestorage.app
+EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=276917399944
+EXPO_PUBLIC_FIREBASE_APP_ID=1:276917399944:web:420b68d85e4019cf884a3d
+```
 
 ## Instalación
 
@@ -88,7 +92,7 @@ npx expo start --ios
 npx expo start --web
 ```
 
-> **Requisito:** el backend Quarkus debe estar corriendo en el puerto 8080 antes de iniciar la app.
+> **Requisito:** el backend Quarkus debe estar corriendo en el puerto 8080 antes de iniciar la app o en su defecto apuntar al backend deployado en gcp: https://backend-1047964714716.us-central1.run.app.
 
 ## Pantallas
 
